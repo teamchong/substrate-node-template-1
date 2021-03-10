@@ -6,6 +6,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use sp_runtime::Percent;
+use sp_runtime::ModuleId;
 use sp_std::prelude::*;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -15,6 +17,9 @@ use sp_runtime::{
 use sp_runtime::traits::{
 	AccountIdLookup, BlakeTwo256, Block as BlockT, Verify, IdentifyAccount, NumberFor,
 };
+use sp_core::u32_trait::_3;
+use sp_core::u32_trait::_2;
+use frame_system::EnsureRoot;
 use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use pallet_grandpa::{AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList};
@@ -22,6 +27,7 @@ use pallet_grandpa::fg_primitives;
 use sp_version::RuntimeVersion;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
+use frame_support::traits::{OnUnbalanced, U128CurrencyToVote, LockIdentifier};
 
 // A few exports that help ease life for downstream crates.
 #[cfg(any(feature = "std", test))]
@@ -31,7 +37,7 @@ pub use pallet_balances::Call as BalancesCall;
 pub use sp_runtime::{Permill, Perbill};
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue,
-	traits::{KeyOwnerProofSystem, Randomness},
+	traits::{KeyOwnerProofSystem, Randomness, Currency, Imbalance, ReservableCurrency, EnsureOrigin, Get},
 	weights::{
 		Weight, IdentityFee,
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -40,7 +46,7 @@ pub use frame_support::{
 use pallet_transaction_payment::CurrencyAdapter;
 
 /// Import the template pallet.
-pub use pallet_template;
+// pub use pallet_template;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -244,7 +250,7 @@ impl pallet_balances::Config for Runtime {
 }
 
 parameter_types! {
-	pub const TransactionByteFee: Balance = 1;
+	pub const TransactionByteFee: Balance = 10;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -262,8 +268,160 @@ impl pallet_sudo::Config for Runtime {
 /// Configure the template pallet in pallets/template.
 impl pallet_template::Config for Runtime {
 	type Event = Event;
+	type Call = Call;
+}	
+
+    pub const MILLICENTS: Balance = 1_000_000_000;
+	pub const CENTS: Balance = 1_000 * MILLICENTS;    // assume this is worth about a cent.
+	pub const DOLLARS: Balance = 100 * CENTS;
+
+parameter_types! {
+	pub const AssetDepositBase: Balance = 100 * DOLLARS;
+	pub const AssetDepositPerZombie: Balance = 1 * DOLLARS;
+	pub const StringLimit: u32 = 50;
+	pub const MetadataDepositBase: Balance = 10 * DOLLARS;
+	pub const MetadataDepositPerByte: Balance = 1 * DOLLARS;
 }
 
+impl pallet_assets::Config for Runtime {
+	type Event = Event;
+	type Balance = u64;
+	type AssetId = u32;
+	type Currency = Balances;
+	type ForceOrigin = frame_system::EnsureRoot<AccountId>;
+	type AssetDepositBase = AssetDepositBase;
+	type AssetDepositPerZombie = AssetDepositPerZombie;
+	type StringLimit = StringLimit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+	pub const CouncilMotionDuration: BlockNumber = 50; 
+	pub const CouncilMaxProposals: u32 = 100;
+	pub const CouncilMaxMembers: u32 = 100;
+}
+
+type CouncilCollective = pallet_collective::Instance1;
+
+impl pallet_collective::Config<CouncilCollective> for Runtime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
+	type MaxMembers = CouncilMaxMembers;
+	type DefaultVote = pallet_collective::PrimeDefaultVote;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const CandidacyBond: Balance = 5 * DOLLARS; // modified for demo
+	pub const VotingBond: Balance = 1 * DOLLARS; 	// modified for demo
+	/// Council elections every week
+	pub const TermDuration: BlockNumber = 7 * DAYS; // 7 days
+	pub const DesiredMembers: u32 = 3;
+	pub const DesiredRunnersUp: u32 = 3;
+	pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
+}
+
+impl pallet_elections_phragmen::Config for Runtime {
+	type Event = Event;
+	type ModuleId = ElectionsPhragmenModuleId;
+	type Currency = Balances;
+	type ChangeMembers = Council;
+	type InitializeMembers = ();  // This is initialized in chain_spec.rs
+	type CurrencyToVote =  U128CurrencyToVote;		
+	type CandidacyBond = CandidacyBond;
+	type VotingBondBase = VotingBond;
+	type VotingBondFactor = VotingBond;
+	type LoserCandidate = TreasuryOne;
+	type KickedMember = TreasuryOne; // Handler for the unbalanced reduction when a member has been kicked.
+	type DesiredMembers = DesiredMembers;
+	type DesiredRunnersUp = DesiredRunnersUp;
+	type TermDuration = TermDuration;
+	type WeightInfo = ();
+}
+
+// Configurable constants 
+
+pub const Supply1: u64 = 500;
+
+// One way of writing Instance1 of mint_token
+impl mint_token::Config<mint_token::Instance1> for Runtime {
+	type Event = Event;
+	type Supply = Supply1;
+}
+
+// Configurable constants for Instance2 of mint_token
+pub const Supply2: u64 = 1000;
+
+// Another way of writing the Instance type
+type SecondMintToken = mint_token::Instance2;
+
+// Instance2 of mint_token
+impl mint_token::Config<SecondMintToken> for Runtime {
+	type Event = Event;
+	type Supply = Supply2;
+}
+
+parameter_types! {
+	pub const ProposalBond: Permill = Permill::from_percent(5); 
+	pub const ProposalBondMinimum: Balance = 1 * DOLLARS; // Minimum amount of funds that should be placed in a deposit for making a proposal.
+	pub const SpendPeriod: BlockNumber = 20; // Period between successive spends: 2 minutes for demo
+	pub const Burn: Permill = Permill::from_percent(100);
+	pub const TreasuryModuleId: ModuleId = ModuleId(*b"py/trsry");
+}
+
+// Approve root origin: frame_system::EnsureRoot<AccountId>
+
+type ApproveOrigin = frame_system::EnsureOneOf<
+	AccountId,
+	EnsureRoot<AccountId>,
+	pallet_collective::EnsureProportionAtLeast<_2, _3, AccountId, CouncilCollective>
+>;
+
+impl pallet_treasury::Config<pallet_treasury::Instance1> for Runtime {
+	type ModuleId = TreasuryModuleId;
+	type Currency = Balances;
+	type ApproveOrigin = ApproveOrigin;  // origin from which approvals must come from
+	type RejectOrigin = ApproveOrigin;   // origin from which rejections must come from
+	type Event = Event;
+	type OnSlash = TreasuryOne;
+	type ProposalBond = ProposalBond;
+	type ProposalBondMinimum = ProposalBondMinimum;
+	type SpendPeriod = SpendPeriod;
+	type Burn = Burn;
+	type BurnDestination = TreasuryTwo; // Send burn to TreasuryTwo
+	type WeightInfo = ();
+	type SpendFunds = ();
+}
+
+
+parameter_types! {
+	pub const NoBond: Permill = Permill::from_percent(5);
+	pub const NoMinimum: Balance = 1 * DOLLARS;
+	pub const Cycles: BlockNumber = 600;			// 60 minutes for demo
+	pub const NoBurn: Permill = Permill::from_percent(1);
+	pub const TreasuryTwoModuleId: ModuleId = ModuleId(*b"py/trsr2");
+}
+
+impl pallet_treasury::Config<pallet_treasury::Instance2> for Runtime {
+	type ModuleId = TreasuryTwoModuleId;
+	type Currency = Balances;
+	type ApproveOrigin = frame_system::EnsureRoot<AccountId>;  // origin from which approvals must come from
+	type RejectOrigin = frame_system::EnsureRoot<AccountId>;   // origin from which rejections must come from
+	type Event = Event;
+	type OnSlash = ();
+	type ProposalBond = ();
+	type ProposalBondMinimum = ();
+	type SpendPeriod = ();
+	type Burn = Burn;
+	type BurnDestination = ();
+	type WeightInfo = ();
+	type SpendFunds = ();
+}
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -279,8 +437,21 @@ construct_runtime!(
 		Balances: pallet_balances::{Module, Call, Storage, Config<T>, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Module, Storage},
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
+		ElectionsPhragmen: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
+		
+		// Instantiables
+		TreasuryOne: pallet_treasury::<Instance1>::{Module, Call, Storage, Event<T>},
+		TreasuryTwo: pallet_treasury::<Instance2>::{Module, Call, Storage, Event<T>},
+		Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
+		
 		// Include the custom logic from the template pallet in the runtime.
 		TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
+		Assets: pallet_assets::{Module, Call, Storage, Event<T>},	
+		MintToken1: mint_token::<Instance1>::{Module, Call, Storage, Event<T>},
+		MintToken2: mint_token::<Instance2>::{Module, Call, Storage, Event<T>},
+
+
+
 	}
 );
 

@@ -23,11 +23,15 @@ version = '2.0.0'
 [dependencies]
 hex-literal = { optional = true, version = '0.3.1' }
 serde = { features = ['derive'], optional = true, version = '1.0.119' }
+pallet-nicks = { default-features = false, version = '3.0.0' }
+
 
 # local dependencies
 pallet-template = { path = '../pallets/template', default-features = false, version = '3.0.0' }
+mint-token = { path = "../pallets/mint-token", default-features = false }
 
 # Substrate dependencies
+pallet-assets = { default-features = false, version = '3.0.0' }
 frame-benchmarking = { default-features = false, optional = true, version = '3.0.0' }
 frame-executive = { default-features = false, version = '3.0.0' }
 frame-support = { default-features = false, version = '3.0.0' }
@@ -53,6 +57,9 @@ sp-session = { default-features = false, version = '3.0.0' }
 sp-std = { default-features = false, version = '3.0.0' }
 sp-transaction-pool = { default-features = false, version = '3.0.0' }
 sp-version = { default-features = false, version = '3.0.0' }
+pallet-treasury = { default-features = false, version = '3.0.0' }
+pallet-elections-phragmen = { default-features = false, version = '3.0.0' }
+pallet-collective = { default-features = false, version = '3.0.0' }
 
 [features]
 default = ['std']
@@ -93,4 +100,9 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
+    'pallet-assets/std',
+    'pallet-treasury/std',
+    'pallet-elections-phragmen/std',
+    'pallet-collective/std',
+
 ]

@@ -7,6 +7,8 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{Verify, IdentifyAccount};
 use sc_service::ChainType;
+use node_template_runtime::ElectionsPhragmenConfig;
+use node_template_runtime::CouncilConfig;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -101,15 +103,19 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 				get_account_id_from_seed::<sr25519::Public>("Bob"),
 				get_account_id_from_seed::<sr25519::Public>("Charlie"),
 				get_account_id_from_seed::<sr25519::Public>("Dave"),
-				get_account_id_from_seed::<sr25519::Public>("Eve"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-				get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-			],
+				// get_account_id_from_seed::<sr25519::Public>("Eve"),
+				// get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+				// get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+				// get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+				// get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+				// get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+				// get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+				// get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				
+				// prefund treasury
+				hex_literal::hex!("6d6f646c70792f74727372790000000000000000000000000000000000000000").into(),
+
+				],
 			true,
 		),
 		// Bootnodes
@@ -141,7 +147,16 @@ fn testnet_genesis(
 		}),
 		pallet_balances: Some(BalancesConfig {
 			// Configure endowed accounts with initial balance of 1 << 60.
-			balances: endowed_accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
+			balances: endowed_accounts.iter().cloned().map(|k|(k, 1 << 50)).collect(),
+		// 	balances: vec![ (
+		// 		get_account_id_from_seed::<sr25519::Public>("Alice"),
+		// 		1 << 50
+		// 	),
+		// 	(
+		// 	get_account_id_from_seed::<sr25519::Public>("Bob"),
+		// 		1 << 50
+		// 	),
+		// 	],
 		}),
 		pallet_aura: Some(AuraConfig {
 			authorities: initial_authorities.iter().map(|x| (x.0.clone())).collect(),
@@ -153,5 +168,30 @@ fn testnet_genesis(
 			// Assign network admin rights.
 			key: root_key,
 		}),
+		
+		pallet_collective_Instance1: Some(CouncilConfig {
+			members: vec![
+				// add Alice and Bob as initial council members
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Bob"),
+				get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			],
+			phantom: Default::default(),
+		}),
+	
+		pallet_elections_phragmen: Some(ElectionsPhragmenConfig::default()),
+
+		// pallet_assets: Some(AssetConfig){
+		// 	assets: vec![
+		// 		1600,
+		// 		16001,
+		// 	],
+
+		// 	initial_balance: 10u128.pow(18 + 9),
+		// 	endowed_accounts: endowed_accounts.clone().into_iter().map(Into::into).collect(),
+		// 	next_asset_id: 1700,
+		// 	staking_asset_id: 16000,
+		// 	spending_asset_id: 16001,
+		// }),
 	}
 }

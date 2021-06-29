@@ -165,12 +165,18 @@ git = 'https://github.com/paritytech/substrate.git'
 rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'
 version = '3.0.0'
 
+[dependencies.pallet-uniques]
+default-features = false
+git = 'https://github.com/paritytech/substrate.git'
+rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'
+version = '3.0.0'
+
 [package]
 authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Unlicense'
-name = 'node-template-runtime'
+name = 'uniques-runtime'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
 version = '3.0.0'
 [package.metadata.docs.rs]
@@ -192,6 +198,7 @@ runtime-benchmarks = [
     'pallet-template/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
+    'pallet-uniques/runtime-benchmarks',
 ]
 std = [
     'codec/std',
@@ -219,4 +226,5 @@ std = [
     'sp-std/std',
     'sp-transaction-pool/std',
     'sp-version/std',
+    'pallet-uniques/std',
 ]

@@ -1,0 +1,75 @@
+name = "Subtrate's Node Template"
+description = "A tool to customize the template to get started with building blockchains with Substrate."
+kickstart_version = 1
+
+ignore = [
+    ".gitignore",
+    "README.md",
+    "LICENSE",
+    "shell.nix",
+    ".envrc",
+    ".github"
+]
+
+cleanup = [
+    { name = "on_github", value = true, paths = ["{{template_project_name}}/"]},
+]
+
+[[variables]]
+name = "template_project_name"
+default = "substrate-node-template"
+prompt = "What do you want to call your project?"
+
+[[variables]]
+name = "node_template"
+default = "node-template"
+prompt = "What do you want to call your node?"
+
+[[variables]]
+name = "pallet_name"
+default = "pallet-template"
+prompt = "What do you want to name your pallet? It's typically formatted as: 'pallet-name'."
+
+
+[[variables]]
+name = "pallet_dir_name"
+default = "template"
+prompt = "What are you calling the parent directory your pallet will live?"
+
+[[variables]]
+name = "pallet_name_for_runtime"
+default = "pallet_template"
+prompt = "What do you want your runtime to know your pallet as? It's usually the same as your pallet's name but with an underscore as a separator instead of a hyphen." 
+
+[[variables]]
+name = "pallet_instance"
+default = "TemplateModule"
+prompt = "A name for your pallet in the construct_runtime macro?"
+
+[[variables]]
+name = "description"
+default = "FRAME pallet template for defining custom runtime logic."
+prompt = "Provide a brief description for your pallet."
+
+[[variables]]
+name = "author"
+default = "Substrate DevHub "
+prompt = "What is your name?"
+
+[[variables]]
+name = "email"
+default = "<https://github.com/substrate-developer-hub>"
+prompt = "What is your email?"
+
+[[variables]]
+name = "on_github"
+default = true
+prompt = "Will the project be hosted on GitHub?"
+
+[[variables]]
+name = "gh_repo"
+default = "https://github.com/substrate-developer-hub/substrate-node-template/"
+prompt = "Please provide the GitHub URL of its repository."
+only_if = { name = "on_github", value = true }
+
+

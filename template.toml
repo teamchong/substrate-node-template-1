@@ -1,6 +1,7 @@
 name = "Subtrate's Node Template"
 description = "A tool to customize the template to get started with building blockchains with Substrate."
 kickstart_version = 1
+directory = "{{template_project_name}}"
 
 ignore = [
     ".gitignore",

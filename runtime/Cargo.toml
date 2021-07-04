@@ -78,7 +78,7 @@ version = '3.0.0'
 
 [dependencies.pallet-{{pallet_name}}]
 default-features = false
-path = '../pallets/template'
+path = '../pallets/{{pallet_name}}'
 version = '3.0.0'
 
 [dependencies.pallet-timestamp]
@@ -170,7 +170,7 @@ authors = ['Substrate DevHub  <https://github.com/substrate-developer-hub>']
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Unlicense'
-name = 'node-template-runtime'
+name = 'node-{{node_name}}-runtime'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
 version = '3.0.0'
 [package.metadata.docs.rs]

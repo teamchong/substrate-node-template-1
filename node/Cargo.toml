@@ -1,9 +1,9 @@
 [features]
 default = []
-runtime-benchmarks = ['node-template-runtime/runtime-benchmarks']
+runtime-benchmarks = ['node-{{node_name}}-runtime/runtime-benchmarks']
 
 [[bin]]
-name = 'node-template'
+name = 'node-{{node_name}}'
 
 [package]
 authors = ['Substrate DevHub  <https://github.com/substrate-developer-hub>']
@@ -12,7 +12,7 @@ description = 'A fresh FRAME-based Substrate node, ready for hacking.'
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Unlicense'
-name = 'node-template'
+name = 'node-{{node_name}}'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
 version = '3.0.0'
 [package.metadata.docs.rs]
@@ -32,7 +32,7 @@ git = 'https://github.com/paritytech/substrate.git'
 rev = 'd6c33e7ec313f9bd5e319dc0a5a3ace5543f9617'
 version = '3.0.0'
 
-[dependencies.node-template-runtime]
+[dependencies.node-{{node_name}}-runtime]
 path = '../runtime'
 version = '3.0.0'
 

@@ -8,7 +8,7 @@ authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
 edition = '2018'
 homepage = 'https://substrate.dev'
 license = 'Unlicense'
-name = 'node-template-runtime'
+name = 'node-{{node_name}}-runtime'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
 version = '3.0.0'
 [package.metadata.docs.rs]
@@ -23,7 +23,7 @@ runtime-benchmarks = [
     'frame-system/runtime-benchmarks',
     'hex-literal',
     'pallet-balances/runtime-benchmarks',
-    'pallet-template/runtime-benchmarks',
+    'pallet-{{pallet_name}}/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
 ]
@@ -38,7 +38,7 @@ std = [
     'pallet-grandpa/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
-    'pallet-template/std',
+    'pallet-{{pallet_name}}/std',
     'pallet-timestamp/std',
     'pallet-transaction-payment-rpc-runtime-api/std',
     'pallet-transaction-payment/std',

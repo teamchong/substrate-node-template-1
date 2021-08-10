@@ -1,4 +1,4 @@
-use node_template_runtime::{
+use node_{{node_name}}_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig, Signature, SudoConfig,
 	SystemConfig, WASM_BINARY,
 };

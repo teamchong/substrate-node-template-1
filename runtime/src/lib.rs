@@ -265,7 +265,7 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-/// Configure the pallet-{{pallet_name}} in pallets/template.
+/// Configure the pallet-{{pallet_name}} in pallets/{{pallet_name}}.
 impl pallet_{{pallet_name}}::Config for Runtime {
 	type Event = Event;
 }

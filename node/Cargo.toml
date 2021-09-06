@@ -25,6 +25,10 @@ version = '3.0.0'
 jsonrpc-core = '18.0.0'
 structopt = '0.3.8'
 
+[dependencies.node-template-runtime]
+path = '../runtime'
+version = '3.0.0-monthly-2021-09+1'
+
 [dependencies.frame-benchmarking]
 git = 'https://github.com/paritytech/substrate.git'
 rev = '20a9bbb1fe47fcd62fcd64b2fa32456b4f434aaf'
@@ -34,10 +38,6 @@ version = '4.0.0-dev'
 git = 'https://github.com/paritytech/substrate.git'
 rev = '20a9bbb1fe47fcd62fcd64b2fa32456b4f434aaf'
 version = '4.0.0-dev'
-
-[dependencies.node-template-runtime]
-path = '../runtime'
-version = '3.0.0'
 
 [dependencies.pallet-transaction-payment-rpc]
 git = 'https://github.com/paritytech/substrate.git'

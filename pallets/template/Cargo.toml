@@ -16,19 +16,19 @@ targets = ['x86_64-unknown-linux-gnu']
 [dev-dependencies.sp-core]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-rev = '20a9bbb1fe47fcd62fcd64b2fa32456b4f434aaf'
+tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
 [dev-dependencies.sp-io]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-rev = '20a9bbb1fe47fcd62fcd64b2fa32456b4f434aaf'
+tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
 [dev-dependencies.sp-runtime]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-rev = '20a9bbb1fe47fcd62fcd64b2fa32456b4f434aaf'
+tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
 [dependencies.codec]
@@ -41,19 +41,19 @@ version = '2.0.0'
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
 optional = true
-rev = '20a9bbb1fe47fcd62fcd64b2fa32456b4f434aaf'
+tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
 [dependencies.frame-support]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-rev = '20a9bbb1fe47fcd62fcd64b2fa32456b4f434aaf'
+tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
 [dependencies.frame-system]
 default-features = false
 git = 'https://github.com/paritytech/substrate.git'
-rev = '20a9bbb1fe47fcd62fcd64b2fa32456b4f434aaf'
+tag = 'monthly-2021-09+1'
 version = '4.0.0-dev'
 
 [features]

@@ -5,6 +5,7 @@
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
 
+
 #[cfg(test)]
 mod mock;
 
@@ -16,87 +17,162 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
+	use frame_support::{
+        dispatch::DispatchResult, 
+        pallet_prelude::*,
+        traits::{
+			Currency, Get, LockIdentifier, LockableCurrency, WithdrawReasons,
+        },
+    };
 	use frame_system::pallet_prelude::*;
+	use micro_rand::*;
+	use scale_info::prelude::vec::Vec;
 
+	type BalanceOf<T> =
+	<<T as Config>::HelloWorldCurrency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+
+	const LOCK_ID: LockIdentifier = *b"hllwrld ";
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+        /// The currency type for our pallet.
+        type HelloWorldCurrency: LockableCurrency<Self::AccountId, Moment = Self::BlockNumber>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	// The pallet's runtime storage items.
-	// https://docs.substrate.io/v3/runtime/storage
+    /// Keep track of a list of members authorized to play the game.
 	#[pallet::storage]
-	#[pallet::getter(fn something)]
-	// Learn more about declaring storage items:
-	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type Something<T> = StorageValue<_, u32>;
+	#[pallet::getter(fn members)]
+	pub type Players<T: Config> = StorageValue<_, Vec<T::AccountId>, ValueQuery>;
 
-	// Pallets use events to inform users when important changes are made.
-	// https://docs.substrate.io/v3/runtime/events-and-errors
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Event documentation should end with an array that provides descriptive names for event
-		/// parameters. [something, who]
-		SomethingStored(u32, T::AccountId),
+		HelloWorld(T::AccountId),
+        DepositLocked(T::AccountId, BalanceOf<T>),
+        GameCompleted(T::AccountId, BalanceOf<T>),
+		UnlockDeposit(T::AccountId),
 	}
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Error names should be descriptive.
-		NoneValue,
-		/// Errors should have helpful documentation associated with them.
-		StorageOverflow,
+		/// Call the hello_world function to sign up. 
+		NotMember,
+		/// Hello world can only be called once until the game is over.
+		AlreadyMember,
 	}
 
-	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
-	// These functions materialize as "extrinsics", which are often compared to transactions.
-	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
+	// An account can register with this dispatchable to be able to play.
+	// Accounts can register other accounts.
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// An example dispatchable that takes a singles value as a parameter, writes the value to
-		/// storage and emits an event. This function must be dispatched by a signed extrinsic.
-		#[pallet::weight(10_000 + T::DbWeight::get().writes(1))]
-		pub fn do_something(origin: OriginFor<T>, something: u32) -> DispatchResult {
-			// Check that the extrinsic was signed and get the signer.
-			// This function will return an error if the extrinsic is not signed.
-			// https://docs.substrate.io/v3/runtime/origins
+		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
+		pub fn hello_world(
+            origin: OriginFor<T>,
+			account: Vec<T::AccountId>, 
+        ) -> DispatchResult {
+            
+            // Must be a signed call.
 			let who = ensure_signed(origin)?;
 
-			// Update storage.
-			<Something<T>>::put(something);
+            // Check that account isn't already registered.
+            let members = <Players<T>>::get();
+			let _location = members.binary_search(&who).err().ok_or(Error::<T>::AlreadyMember)?;
 
-			// Emit an event.
-			Self::deposit_event(Event::SomethingStored(something, who));
-			// Return a successful DispatchResultWithPostInfo
+			<Players<T>>::put(account);
+
+            // Log a message to the terminal.
+            log::info!("🥳 Welcome to the party, {:?}", who);
+			log::info!(" ");
+        
+            // Emit an event.
+			Self::deposit_event(Event::HelloWorld(who));
+
+			// Return a successful DispatchResultWithPostInfo.
 			Ok(())
 		}
 
-		/// An example dispatchable that may throw a custom error.
+		/// Allows a player to guess a number. 
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
+		pub fn play_game(
+            origin: OriginFor<T>,
+            deposit: BalanceOf<T>,
+            guess: u32,
+        ) -> DispatchResult {
 
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => Err(Error::<T>::NoneValue)?,
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
-				},
-			}
+            // Must be a signed call.
+			let who = ensure_signed(origin)?;
+            
+            // Caller must be a member to play.
+            let mut members = <Players<T>>::get();
+            let location = members.binary_search(&who).ok().ok_or(Error::<T>::NotMember)?;
+			members.insert(location, who.clone());
+			let account_id = who.clone();
+
+            // Lock deposit.
+            T::HelloWorldCurrency::set_lock(LOCK_ID, &who, deposit, WithdrawReasons::empty());
+            Self::deposit_event(Event::DepositLocked(who, deposit));
+            log::info!("💰 {:?}, locked for {:?}", account_id, deposit);
+
+            // Execute simple game logic.
+            // Generate a random number and compare it with the player's guess.
+            // If numbers match, player receives reward. Otherwise, player gets slashed. 
+			let mut rnd = Random::new(1234);
+			let get_random = rnd.next_int_i64(1, 5);
+			let random_number: u32 = get_random as u32;
+
+            // Earn or lose based on guess.
+            if random_number == guess {
+                T::HelloWorldCurrency::issue(deposit);
+                T::HelloWorldCurrency::set_lock(LOCK_ID, &account_id, deposit, WithdrawReasons::all());
+            } else {
+                T::HelloWorldCurrency::slash(&account_id, random_number.into());
+            }
+			let total_balance = T::HelloWorldCurrency::total_balance(&account_id);
+            
+			log::info!("👀 👀 The number you guessed was {:?} ", guess);
+			log::info!("The number generated was {:?} ", random_number);
+            log::info!("📣 📣 Your total balance is {:?} ", total_balance);
+
+			// Deposit GameCompleted event.			
+			Self::deposit_event(Event::GameCompleted(account_id, T::HelloWorldCurrency::total_issuance()));
+
+			Ok(().into())
+		}
+	
+		/// Allows a player to unlock their deposit and receive their rewards.
+		#[pallet::weight(10_000)]
+		pub fn unlock_deposit(
+			origin: OriginFor<T>,
+		) -> DispatchResult {
+
+		// Must be a signed call.
+		let who = ensure_signed(origin)?;
+		
+		// Caller must be a member to play.
+		let mut members = <Players<T>>::get();
+		let location = members.binary_search(&who).ok().ok_or(Error::<T>::NotMember)?;
+
+		let account_id = who.clone();
+
+		// Remove member from list.
+		members.remove(location);
+		
+		// Give deposit back. 
+		T::HelloWorldCurrency::remove_lock(LOCK_ID, &account_id);
+
+		// Deposit UnlockDeposit event.			
+		Self::deposit_event(Event::UnlockDeposit(account_id));
+
+		Ok(().into())
+
 		}
 	}
 }

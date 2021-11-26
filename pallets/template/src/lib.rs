@@ -16,10 +16,9 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
+	use frame_support::{dispatch::DispatchResult, sp_runtime::Either, pallet_prelude::*};
 	use frame_support::traits::SortedMembers;
 	use frame_system::{pallet_prelude::*, RawOrigin};
-	use sp_runtime::Either;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -61,7 +60,8 @@ pub mod pallet {
 
 	/// The "OR gate" implementation of `EnsureOrigin`.
 	///
-	/// Origin check will pass if `L` or `R` origin check passes. `L` is tested first.
+	/// This check ensures that an origin is checked for against two different types. 
+	/// This check will pass if `L` or `R` origin check passes. `L` is tested first.
 	pub struct EnsureOneOf<AccountId, L, R>(sp_std::marker::PhantomData<(AccountId, L, R)>);
 	impl<
 			AccountId,
@@ -86,22 +86,30 @@ pub mod pallet {
 		}
 	}
 	
-	  // Our origins for this pallet.
+	  /// Origins for this pallet.
+	  /// In order to administer a test, a member must be either of origin Teacher.
 	  #[derive(PartialEq, Eq, Clone, RuntimeDebug, Encode, Decode, scale_info::TypeInfo)]
 	  pub enum MyOrigins<AccountId> {
-		SpecialOrigin(AccountId),
+		SudoMember(AccountId),
+		Teacher,
+		Council,
+		MemberOfSociety(AccountId),
 		Other,
 	  }
 
+	  // Ensures a Sudo-like origin.
 	  impl<AccountId> From<Option<AccountId>> for MyOrigins<AccountId> {
 		fn from(s: Option<AccountId>) -> MyOrigins<AccountId> {
 			match s {
-				Some(who) => MyOrigins::SpecialOrigin(who),
+				Some(who) => MyOrigins::SudoMember(who),
 				None => MyOrigins::Other,
 		  }
 		}
 	  }
 
+	  /// Checks for a MemberOfSociety origin.
+	  /// 
+	  /// It checks against a vec of AccountIds.
 	  pub struct EnsureAccountOrigin<Who, AccountId>(sp_std::marker::PhantomData<(Who, AccountId)>);
 
 	  impl<
@@ -111,11 +119,10 @@ pub mod pallet {
       
 		  > EnsureOrigin<O> for EnsureAccountOrigin<Who, AccountId>
 		  {
-
 			type Success = AccountId;
 			fn try_origin(o: O) -> Result<Self::Success, O> {
 				o.into().and_then(|o| match o {
-				MyOrigins::SpecialOrigin(ref who) if Who::contains(who) => Ok(who.clone()),
+				MyOrigins::MemberOfSociety(ref who) if Who::contains(who) => Ok(who.clone()),
 				r => Err(O::from(r)),
 				})
 			}
@@ -125,33 +132,6 @@ pub mod pallet {
 				O::from(MyOrigins::SpecialOrigin)
 			}
 		}
-
-	/// The "OR gate" implementation of `EnsureOrigin`.
-	///
-	/// Origin check will pass if `L` or `R` origin check passes. `L` is tested first.
-	pub struct MustBeMember<AccountId, L, R>(sp_std::marker::PhantomData<(AccountId, L, R)>);
-	impl<
-			AccountId,
-			O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>,
-			L: EnsureOrigin<O>,
-			R: EnsureOrigin<O>,
-		> EnsureOrigin<O> for MustBeMember<AccountId, L, R> {
-		
-		type Success = Either<L::Success, R::Success>;
-
-		fn try_origin(o: O) -> Result<Self::Success, O> {
-
-			L::try_origin(o).map_or_else(
-				|o| R::try_origin(o).map(|o| Either::Right(o)),
-				|o| Ok(Either::Left(o)),
-			)
-		}
-
-		#[cfg(feature = "runtime-benchmarks")]
-		fn successful_origin() -> O {
-			L::successful_origin()
-		}
-	}
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
 	// These functions materialize as "extrinsics", which are often compared to transactions.

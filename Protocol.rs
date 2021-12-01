@@ -73,3 +73,20 @@
 //! - `unassign_curator` - Unassign an accepted curator from a specific earmark.
 //! - `close_bounty` - Cancel the earmark for a specific treasury amount and close the bounty.
 //! 
+//! 
+//! 
+//! 
+//! Pallets / logic:
+//! 
+//! - Society: anyone can start a group and specify member types. For us, this is Teachers and content writers.
+//! This includes anyone contributing tutorial material or their time to test learners or review bounties.
+//! This can scale horizontally to other use cases, like music collaorations or web 2.0 gig economy type platforms.
+//! 
+//! - Bounties: Post bounties and get them approved. Only teachers or other content writers in Society can approve them. 
+//! 
+//! - Council. This is the council members that can propose and enact treasury spends to different societies.
+//! 
+//! - Treasury. This collects slashed fees, txns fees and burnt funds. Council members approve spend proposals to treasury. 
+//!     Proposals can't originate from existing council members.
+//! 
+//! - Members. This pallet helps enforces membership checks. 
